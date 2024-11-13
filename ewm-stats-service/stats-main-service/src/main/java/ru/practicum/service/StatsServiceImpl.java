@@ -43,17 +43,6 @@ public class StatsServiceImpl implements StatsService {
         return unique
                 ? fromRepo.stream()
                 .collect(Collectors.groupingBy(
-                        x -> Map.entry(x.getApp(), x.getUri()), Collectors.counting()
-                ))
-                .entrySet().stream()
-                .map(x -> new ViewStatsDto(
-                        x.getKey().getKey(),
-                        x.getKey().getValue(),
-                        x.getValue()))
-                .collect(Collectors.toList())
-
-                : fromRepo.stream()
-                .collect(Collectors.groupingBy(
                         x -> Map.entry(x.getApp(), x.getUri()),
                         Collectors.mapping(
                                 EndpointHit::getIp,
@@ -65,6 +54,17 @@ public class StatsServiceImpl implements StatsService {
                         x.getKey().getKey(),
                         x.getKey().getValue(),
                         (long) x.getValue().size()))
+                .collect(Collectors.toList())
+
+                : fromRepo.stream()
+                .collect(Collectors.groupingBy(
+                        x -> Map.entry(x.getApp(), x.getUri()), Collectors.counting()
+                ))
+                .entrySet().stream()
+                .map(x -> new ViewStatsDto(
+                        x.getKey().getKey(),
+                        x.getKey().getValue(),
+                        x.getValue()))
                 .collect(Collectors.toList());
     }
 

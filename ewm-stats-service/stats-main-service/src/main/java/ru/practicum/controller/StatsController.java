@@ -16,13 +16,13 @@ import java.util.List;
 public class StatsController {
     private final StatsService service;
 
-    @PostMapping
+    @PostMapping("/hit")
     public void recordHit(@RequestBody @Valid EndpointHitDto endpointHitDto) {
         log.info("Controller: record hit() {}", endpointHitDto);
         service.recordHit(endpointHitDto);
     }
 
-    @GetMapping
+    @GetMapping("/stats")
     public List<ViewStatsDto> getStats(@RequestParam String start,
                                        @RequestParam String end,
                                        @RequestParam (required = false) List<String> uris,
