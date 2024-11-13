@@ -4,7 +4,7 @@ import org.mapstruct.Mapper;
 import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.model.EndpointHit;
 
-@Mapper
+@Mapper(componentModel = "spring")
 public interface EndpointHitMapper {
     EndpointHit map(EndpointHitDto dto);
 }
