@@ -18,9 +18,8 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.times;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -49,7 +48,7 @@ class StatsControllerTest {
     }
 
     @Test
-    void testGetStats() throws Exception{
+    void testGetStats() throws Exception {
         ViewStatsDto viewStatsDto = new ViewStatsDto("app1", "/home", 100L);
         List<ViewStatsDto> statsList = Collections.singletonList(viewStatsDto);
 
