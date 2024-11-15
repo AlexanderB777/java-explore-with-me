@@ -17,18 +17,14 @@ import java.util.List;
 @Service
 public class StatsClient {
     private static final String BASE_URL = "http://localhost:9090";
-    private final WebClient webClient;
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-    public StatsClient() {
-        this.webClient = WebClient.builder().baseUrl(BASE_URL).build();
-    }
+    private final WebClient webClient = WebClient.builder().baseUrl(BASE_URL).build();
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public Mono<Void> recordHit(String app,
                                 String uri,
                                 String ip,
                                 LocalDateTime timestamp) {
-        EndpointHitDto dto = new EndpointHitDto(app, uri, ip, timestamp.format(formatter));
+        EndpointHitDto dto = new EndpointHitDto(app, uri, ip, timestamp.format(FORMATTER));
 
         return webClient.post()
                 .uri("/hit")
@@ -86,6 +82,6 @@ public class StatsClient {
 
 
     private String encodeTime(LocalDateTime time) {
-        return URLEncoder.encode(time.format(formatter), StandardCharsets.UTF_8);
+        return URLEncoder.encode(time.format(FORMATTER), StandardCharsets.UTF_8);
     }
 }

@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 public class StatsServiceImpl implements StatsService {
     private final StatsRepository repository;
     private final EndpointHitMapper mapper;
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Override
     public void recordHit(EndpointHitDto endpointHitDto) {
@@ -39,9 +39,17 @@ public class StatsServiceImpl implements StatsService {
                 ? repository.findByTimestampBetween(decodeTimeString(start), decodeTimeString(end))
                 : repository.findByTimestampBetweenAndUriIn(decodeTimeString(start), decodeTimeString(end), uris);
 
-
         return unique
-                ? fromRepo.stream()
+                ? generateResponseWithUniqueTrue(fromRepo)
+                : generateResponseWithUniqueFalse(fromRepo);
+    }
+
+    private LocalDateTime decodeTimeString(String timeString) {
+        return LocalDateTime.parse(URLDecoder.decode(timeString, StandardCharsets.UTF_8), FORMATTER);
+    }
+
+    private List<ViewStatsDto> generateResponseWithUniqueTrue(List<EndpointHit> endpointHits) {
+        return endpointHits.stream()
                 .collect(Collectors.groupingBy(
                         x -> Map.entry(x.getApp(), x.getUri()),
                         Collectors.mapping(
@@ -54,9 +62,11 @@ public class StatsServiceImpl implements StatsService {
                         x.getKey().getKey(),
                         x.getKey().getValue(),
                         (long) x.getValue().size()))
-                .collect(Collectors.toList())
+                .collect(Collectors.toList());
+    }
 
-                : fromRepo.stream()
+    private List<ViewStatsDto> generateResponseWithUniqueFalse(List<EndpointHit> endpointHits) {
+        return endpointHits.stream()
                 .collect(Collectors.groupingBy(
                         x -> Map.entry(x.getApp(), x.getUri()), Collectors.counting()
                 ))
@@ -66,9 +76,5 @@ public class StatsServiceImpl implements StatsService {
                         x.getKey().getValue(),
                         x.getValue()))
                 .collect(Collectors.toList());
-    }
-
-    private LocalDateTime decodeTimeString(String timeString) {
-        return LocalDateTime.parse(URLDecoder.decode(timeString, StandardCharsets.UTF_8), formatter);
     }
 }
