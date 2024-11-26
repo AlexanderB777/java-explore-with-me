@@ -79,6 +79,7 @@ public class StatsServiceImpl implements StatsService {
                         x.getKey().getKey(),
                         x.getKey().getValue(),
                         x.getValue()))
-                .collect(Collectors.toList());
+                .sorted(Comparator.comparing(ViewStatsDto::hits).reversed())
+                .toList();
     }
 }
