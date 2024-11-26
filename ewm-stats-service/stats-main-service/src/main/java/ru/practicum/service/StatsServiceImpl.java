@@ -45,7 +45,7 @@ public class StatsServiceImpl implements StatsService {
     }
 
     private LocalDateTime decodeTimeString(String timeString) {
-        return LocalDateTime.parse(URLDecoder.decode(timeString, StandardCharsets.UTF_8), FORMATTER);
+        return LocalDateTime.parse(timeString, FORMATTER);
     }
 
     private List<ViewStatsDto> generateResponseWithUniqueTrue(List<EndpointHit> endpointHits) {
