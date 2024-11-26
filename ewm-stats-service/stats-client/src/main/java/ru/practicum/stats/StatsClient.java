@@ -13,7 +13,7 @@ import java.util.List;
 
 @Service
 public class StatsClient {
-    private static final String BASE_URL = "http://localhost:9090";
+    private static final String BASE_URL = "http://stats-server:9090";
     private final WebClient webClient = WebClient.builder().baseUrl(BASE_URL).build();
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
