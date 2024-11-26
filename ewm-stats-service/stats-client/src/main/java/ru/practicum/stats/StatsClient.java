@@ -42,8 +42,7 @@ public class StatsClient {
                 .queryParam("uris", uris)
                 .queryParam("unique", unique)
                 .encode()
-                .build()
-                .toUri();
+                .build().toUri();
 
         return webClient.get()
                 .uri(uri)
