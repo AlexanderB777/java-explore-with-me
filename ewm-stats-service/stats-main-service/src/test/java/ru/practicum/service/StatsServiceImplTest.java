@@ -102,10 +102,10 @@ class StatsServiceImplTest {
 
         // then
         assertEquals(2, dtoList.size());
-        assertEquals(2, dtoList.getFirst().hits());
-        assertEquals(3, dtoList.getLast().hits());
-        assertEquals("/events/2", dtoList.getFirst().uri());
-        assertEquals("/events/1", dtoList.getLast().uri());
+        assertEquals(3, dtoList.getFirst().hits());
+        assertEquals(2, dtoList.getLast().hits());
+        assertEquals("/events/1", dtoList.getFirst().uri());
+        assertEquals("/events/2", dtoList.getLast().uri());
         assertTrue(dtoList.stream().allMatch(x -> x.app().equals("ewm-main-service")));
     }
 

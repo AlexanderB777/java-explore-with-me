@@ -28,12 +28,24 @@ public class EventsController {
                                          @RequestParam(required = false, defaultValue = "false") Boolean onlyAvailable,
                                          @RequestParam(required = false) String sort,
                                          @RequestParam(required = false, defaultValue = "0")
-                                             @PositiveOrZero Integer from,
-                                         @RequestParam(required = false, defaultValue = "10") @Positive Integer size) {
+                                         @PositiveOrZero Integer from,
+                                         @RequestParam(required = false, defaultValue = "10") @Positive Integer size,
+                                         HttpServletRequest httpServletRequest) {
         log.info("Controller: getEvents(), text = {}, categories = {}, paid = {}, rangeStart = {}, rangeEnd = {}, " +
-                "onlyAvailable = {}, sort = {}, from = {}, size = {}",
-                text,categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
-        return service.getPublicEvents(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
+                        "onlyAvailable = {}, sort = {}, from = {}, size = {}",
+                text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
+        return service.getPublicEvents(
+                text,
+                categories,
+                paid,
+                rangeStart,
+                rangeEnd,
+                onlyAvailable,
+                sort,
+                from,
+                size,
+                httpServletRequest.getRemoteAddr(),
+                httpServletRequest.getRequestURI());
     }
 
     @GetMapping("/{id}")

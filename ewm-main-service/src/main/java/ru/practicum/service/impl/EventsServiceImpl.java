@@ -198,11 +198,17 @@ public class EventsServiceImpl implements EventsService {
                                                Boolean onlyAvailable,
                                                String sort,
                                                Integer from,
-                                               Integer size) {
+                                               Integer size,
+                                               String remoteAddr,
+                                               String requestURI) {
         log.info("Service: getPublicEvents(), text = {}, categories = {}, paid = {}, rangeStart = {}, rangeEnd = {}, " +
                         "onlyAvailable = {}, sort = {}, from = {}, size = {}", text, categories, paid,
                 rangeStart, rangeEnd,
                 onlyAvailable, sort, from, size);
+        statsClient.recordHit("ewm-main-service",
+                requestURI,
+                remoteAddr,
+                LocalDateTime.now());
         QEvent event = QEvent.event;
         JPAQuery<Event> query = queryFactory.selectFrom(event);
         query.where(event.state.eq(EventState.PUBLISHED));

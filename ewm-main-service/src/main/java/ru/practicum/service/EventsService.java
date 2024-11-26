@@ -22,7 +22,7 @@ public interface EventsService {
 
     List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
                                         String rangeStart, String rangeEnd, Boolean onlyAvailable,
-                                        String sort, Integer from, Integer size);
+                                        String sort, Integer from, Integer size, String remoteAddr, String requestURI);
 
     EventFullDto getEvent(Long id, String remoteAddr, String requestURI);
 
