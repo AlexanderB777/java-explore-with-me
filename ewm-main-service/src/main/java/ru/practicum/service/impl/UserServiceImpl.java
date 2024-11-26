@@ -12,7 +12,6 @@ import ru.practicum.mapper.UserMapper;
 import ru.practicum.reposirory.UserRepository;
 import ru.practicum.service.UserService;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Service
