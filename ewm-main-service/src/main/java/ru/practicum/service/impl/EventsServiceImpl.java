@@ -63,7 +63,7 @@ public class EventsServiceImpl implements EventsService {
         if (dto.getParticipantLimit() == null) {
             dto.setParticipantLimit(0);
         }
-        if (dto.getRequestModeration() == null ) {
+        if (dto.getRequestModeration() == null) {
             dto.setRequestModeration(true);
         }
 
