@@ -3,12 +3,14 @@ package ru.practicum.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Entity
 @Table(name = "compilations")
 @Data
+@NoArgsConstructor
 public class Compilation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
