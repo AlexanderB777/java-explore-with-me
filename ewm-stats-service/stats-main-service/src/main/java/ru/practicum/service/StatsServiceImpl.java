@@ -5,14 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.dto.ViewStatsDto;
+import ru.practicum.exception.TimeException;
 import ru.practicum.mapper.EndpointHitMapper;
 import ru.practicum.model.EndpointHit;
 import ru.practicum.repository.StatsRepository;
 
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,17 +35,20 @@ public class StatsServiceImpl implements StatsService {
     public List<ViewStatsDto> getStats(String start, String end, List<String> uris, Boolean unique) {
         log.info("Service: getStats() start = {}, end = {}, uris = {}, unique = {}", start, end, uris, unique);
 
+        LocalDateTime startTime = LocalDateTime.parse(start, FORMATTER);
+        LocalDateTime endTime = LocalDateTime.parse(end, FORMATTER);
+
+        if (endTime.isBefore(startTime)) {
+            throw new TimeException("End time is before start time");
+        }
+
         List<EndpointHit> fromRepo = (uris == null || uris.isEmpty())
-                ? repository.findByTimestampBetween(decodeTimeString(start), decodeTimeString(end))
-                : repository.findByTimestampBetweenAndUriIn(decodeTimeString(start), decodeTimeString(end), uris);
+                ? repository.findByTimestampBetween(startTime, endTime)
+                : repository.findByTimestampBetweenAndUriIn(startTime, endTime, uris);
 
         return unique
                 ? generateResponseWithUniqueTrue(fromRepo)
                 : generateResponseWithUniqueFalse(fromRepo);
-    }
-
-    private LocalDateTime decodeTimeString(String timeString) {
-        return LocalDateTime.parse(URLDecoder.decode(timeString, StandardCharsets.UTF_8), FORMATTER);
     }
 
     private List<ViewStatsDto> generateResponseWithUniqueTrue(List<EndpointHit> endpointHits) {
@@ -62,7 +65,8 @@ public class StatsServiceImpl implements StatsService {
                         x.getKey().getKey(),
                         x.getKey().getValue(),
                         (long) x.getValue().size()))
-                .collect(Collectors.toList());
+                .sorted(Comparator.comparing(ViewStatsDto::hits).reversed())
+                .toList();
     }
 
     private List<ViewStatsDto> generateResponseWithUniqueFalse(List<EndpointHit> endpointHits) {
@@ -75,6 +79,7 @@ public class StatsServiceImpl implements StatsService {
                         x.getKey().getKey(),
                         x.getKey().getValue(),
                         x.getValue()))
-                .collect(Collectors.toList());
+                .sorted(Comparator.comparing(ViewStatsDto::hits).reversed())
+                .toList();
     }
 }

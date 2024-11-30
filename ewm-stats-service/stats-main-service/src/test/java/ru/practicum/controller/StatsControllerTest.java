@@ -43,7 +43,7 @@ class StatsControllerTest {
         mockMvc.perform(post("/hit")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(endpointHitDto)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
         Mockito.verify(statsService, times(1)).recordHit(any(EndpointHitDto.class));
     }
 
