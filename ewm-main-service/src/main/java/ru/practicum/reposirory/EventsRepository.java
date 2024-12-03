@@ -3,19 +3,14 @@ package ru.practicum.reposirory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.entity.Event;
 import ru.practicum.entity.ParticipationRequest;
-import ru.practicum.entity.Reaction;
-import ru.practicum.entity.User;
 import ru.practicum.model.EventState;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public interface EventsRepository extends JpaRepository<Event, Long> {

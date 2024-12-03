@@ -9,16 +9,13 @@ import ru.practicum.dto.user.AuthorDto;
 import ru.practicum.dto.user.NewUserRequest;
 import ru.practicum.dto.user.UserDto;
 import ru.practicum.entity.Event;
-import ru.practicum.entity.Reaction;
 import ru.practicum.entity.User;
 import ru.practicum.mapper.UserMapper;
 import ru.practicum.model.EventState;
 import ru.practicum.reposirory.EventsRepository;
-import ru.practicum.reposirory.ReactionRepository;
 import ru.practicum.reposirory.UserRepository;
 import ru.practicum.service.UserService;
 
-import java.util.AbstractMap;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;

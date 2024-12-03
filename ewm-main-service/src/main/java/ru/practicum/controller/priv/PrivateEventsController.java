@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.dto.ParticipationRequestDto;
 import ru.practicum.dto.event.*;
 import ru.practicum.service.EventsService;
-import ru.practicum.service.RequestsService;
 
 import java.util.List;
 
