@@ -6,6 +6,5 @@ import ru.practicum.entity.Reaction;
 import java.util.Optional;
 
 public interface ReactionRepository extends JpaRepository<Reaction, Long> {
-
     Optional<Reaction> findByUser_idAndEvent_id(Long userId, Long eventId);
 }
