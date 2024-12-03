@@ -83,6 +83,7 @@ public class PrivateEventsController {
         return service.putDislike(userId, eventId);
     }
 
+
     @DeleteMapping("/{eventId}/like")
     public void deleteLike(@PathVariable Long userId,
                            @PathVariable Long eventId) {
