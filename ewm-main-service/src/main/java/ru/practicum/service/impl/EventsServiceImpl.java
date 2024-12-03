@@ -9,10 +9,7 @@ import org.springframework.stereotype.Service;
 import ru.practicum.dto.ParticipationRequestDto;
 import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.dto.event.*;
-import ru.practicum.entity.Category;
-import ru.practicum.entity.Event;
-import ru.practicum.entity.ParticipationRequest;
-import ru.practicum.entity.QEvent;
+import ru.practicum.entity.*;
 import ru.practicum.exception.EventConstraintException;
 import ru.practicum.exception.IncorrectRequestException;
 import ru.practicum.exception.NotFoundException;
@@ -20,12 +17,15 @@ import ru.practicum.mapper.EventMapper;
 import ru.practicum.mapper.ParticipationRequestMapper;
 import ru.practicum.model.*;
 import ru.practicum.reposirory.EventsRepository;
+import ru.practicum.reposirory.ReactionRepository;
+import ru.practicum.reposirory.UserRepository;
 import ru.practicum.service.EventsService;
 import ru.practicum.stats.StatsClient;
 import ru.practicum.util.UtilConstants;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,6 +38,8 @@ public class EventsServiceImpl implements EventsService {
     private final JPAQueryFactory queryFactory;
     private final StatsClient statsClient;
     private final ParticipationRequestMapper participationRequestMapper;
+    private final ReactionRepository reactionRepository;
+    private final UserRepository userRepository;
 
     @Override
     public List<EventShortDto> getUsersEvents(Long userId, Integer from, Integer size) {
@@ -230,12 +232,10 @@ public class EventsServiceImpl implements EventsService {
         }
         if (sort != null && !sort.isEmpty()) {
             switch (sort) {
-                case "EVENT_DATE" -> {
-                    query.orderBy(event.eventDate.desc());
-                }
-                case "VIEWS" -> {
-                    query.orderBy(event.views.desc());
-                }
+                case "EVENT_DATE" -> query.orderBy(event.eventDate.desc());
+
+                case "VIEWS" -> query.orderBy(event.views.desc());
+
             }
         }
         query.offset(from).limit(size);
@@ -276,6 +276,73 @@ public class EventsServiceImpl implements EventsService {
         log.info("service: getUsersParticipationRequests(), userId: {}, eventId: {}", userId, eventId);
         List<ParticipationRequest> requests = repository.findRequestsByUserIdAndEventId(userId, eventId);
         return participationRequestMapper.toDto(requests);
+    }
+
+    @Override
+    public EventShortDto putLike(Long userId, Long eventId) {
+        log.info("service: putLike(), userId: {}, eventId: {}", userId, eventId);
+        checkUserAndEvent(userId, eventId);
+        if (!checkPublishedById(eventId)) {
+            throw new IncorrectRequestException("Event with id " + eventId + " is not published");
+        }
+        Reaction reaction = reactionRepository
+                .findByUser_idAndEvent_id(userId, eventId)
+                .orElse(new Reaction(userId, eventId));
+        reaction.setIsPositive(true);
+        reactionRepository.save(reaction);
+        return mapper.toShortDto(repository.findById(eventId).orElse(null));
+    }
+
+    @Override
+    public EventShortDto putDislike(Long userId, Long eventId) {
+        log.info("service: putDislike(), userId: {}, eventId: {}", userId, eventId);
+        checkUserAndEvent(userId, eventId);
+        if (!checkPublishedById(eventId)) {
+            throw new IncorrectRequestException("Event with id " + eventId + " is not published");
+        }
+        Reaction reaction = reactionRepository
+                .findByUser_idAndEvent_id(userId, eventId)
+                .orElse(new Reaction(userId, eventId));
+        reaction.setIsPositive(false);
+        reactionRepository.save(reaction);
+        return mapper.toShortDto(repository.findById(eventId).orElse(null));
+    }
+
+    private boolean checkPublishedById(Long eventId) {
+        Event event = repository.findById(eventId).orElse(null);
+        return event != null && event.getState() == EventState.PUBLISHED;
+    }
+
+    @Override
+    public void deleteLike(Long userId, Long eventId) {
+        log.info("service: deleteLike(), userId: {}, eventId: {}", userId, eventId);
+        checkUserAndEvent(userId, eventId);
+        Optional<Reaction> reaction = reactionRepository.findByUser_idAndEvent_id(userId, eventId);
+        if (reaction.isPresent() && reaction.get().getIsPositive()) {
+            reactionRepository.deleteById(reaction.get().getId());
+        }
+    }
+
+    @Override
+    public void deleteDislike(Long userId, Long eventId) {
+        log.info("service: deleteDislike(), userId: {}, eventId: {}", userId, eventId);
+        checkUserAndEvent(userId, eventId);
+        Optional<Reaction> reaction = reactionRepository.findByUser_idAndEvent_id(userId, eventId);
+        if (reaction.isPresent() && !reaction.get().getIsPositive()) {
+            reactionRepository.deleteById(reaction.get().getId());
+        }
+    }
+
+    @Override
+    public List<EventFullDto> getEventsByRating() {
+        log.info("service: getEventsByRating()");
+        List<Event> events = repository.findAllByEventState(EventState.PUBLISHED);
+        return events
+                .stream()
+                .map(mapper::toFullDto)
+                .sorted(Comparator.comparing(x -> x.getLikes() - x.getDislikes()))
+                .toList()
+                .reversed();
     }
 
     @Override
@@ -425,6 +492,15 @@ public class EventsServiceImpl implements EventsService {
             if (endTime != null) {
                 query.where(event.eventDate.loe(endTime));
             }
+        }
+    }
+
+    private void checkUserAndEvent(Long userId, Long eventId) {
+        if (!userRepository.existsById(userId)) {
+            throw new NotFoundException("User with id " + userId + " does not exist");
+        }
+        if (!repository.existsById(eventId)) {
+            throw new NotFoundException("Event with id " + eventId + " does not exist");
         }
     }
 }

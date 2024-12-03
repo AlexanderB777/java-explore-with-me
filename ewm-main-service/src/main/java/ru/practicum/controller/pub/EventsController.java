@@ -56,4 +56,10 @@ public class EventsController {
                 httpServletRequest.getRemoteAddr(),
                 httpServletRequest.getRequestURI());
     }
+
+    @GetMapping("/rating")
+    public List<EventFullDto> getEventsByRating() {
+        log.info("Controller: getEventsByRating()");
+        return service.getEventsByRating();
+    }
 }

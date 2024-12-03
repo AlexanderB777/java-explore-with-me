@@ -31,4 +31,14 @@ public interface EventsService {
     EventRequestStatusUpdateResult updateUsersParticipationRequest(Long userId,
                                                                    Long eventId,
                                                                    EventRequestStatusUpdateRequest request);
+
+    EventShortDto putLike(Long userId, Long eventId);
+
+    EventShortDto putDislike(Long userId, Long eventId);
+
+    void deleteLike(Long userId, Long eventId);
+
+    void deleteDislike(Long userId, Long eventId);
+
+    List<EventFullDto> getEventsByRating();
 }

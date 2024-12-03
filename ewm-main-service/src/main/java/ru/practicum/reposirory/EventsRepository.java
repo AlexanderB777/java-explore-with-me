@@ -9,17 +9,20 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.entity.Event;
 import ru.practicum.entity.ParticipationRequest;
+import ru.practicum.entity.Reaction;
+import ru.practicum.entity.User;
 import ru.practicum.model.EventState;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface EventsRepository extends JpaRepository<Event, Long> {
     @Query("SELECT e " +
             "FROM Event e " +
             "WHERE e.id = :id AND e.initiator.id = :userId")
-    Optional<Event> findByIdAndInitiator(@Param("id") Long id,@Param("userId") Long userId);
+    Optional<Event> findByIdAndInitiator(@Param("id") Long id, @Param("userId") Long userId);
 
     @Query("SELECT e.eventDate FROM Event e WHERE e.id = :id")
     LocalDateTime findEventDateById(@Param("id") Long id);
@@ -34,8 +37,8 @@ public interface EventsRepository extends JpaRepository<Event, Long> {
 
     Page<Event> findAllByInitiatorId(Long initiatorId, PageRequest of);
 
-    @Modifying
-    @Transactional
-    @Query("UPDATE Event e SET e.views = e.views + 1 WHERE e.id = :eventId")
-    void incrementViewsById(Long eventId);
+    @Query("SELECT e FROM Event e " +
+            "WHERE e.state = :eventState")
+    List<Event> findAllByEventState(@Param("eventState") EventState state);
+
 }

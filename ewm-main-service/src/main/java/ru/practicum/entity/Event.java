@@ -55,7 +55,9 @@ public class Event {
     @OneToMany(mappedBy = "event")
     @ToString.Exclude
     private List<ParticipationRequest> requests;
-
+    @OneToMany(mappedBy = "event")
+    @ToString.Exclude
+    private List<Reaction> reactions;
     @Column(nullable = false, name = "request_moderation")
     private Boolean requestModeration;
     @Column(name = "published_on")

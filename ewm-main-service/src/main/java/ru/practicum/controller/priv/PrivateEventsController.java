@@ -19,7 +19,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PrivateEventsController {
     private final EventsService service;
-    private final RequestsService requestsService;
 
     @GetMapping
     public List<EventShortDto> getUsersEvents(@PathVariable @Positive Long userId,
@@ -68,5 +67,33 @@ public class PrivateEventsController {
         log.info("Controller: updateUsersParticipationRequest() userId={}, eventId={}, request={}",
                 userId, eventId, request);
         return service.updateUsersParticipationRequest(userId, eventId, request);
+    }
+
+    @PutMapping("/{eventId}/like")
+    public EventShortDto putLike(@PathVariable Long userId,
+                                 @PathVariable Long eventId) {
+        log.info("Controller: putLike() userId={}, eventId={}", userId, eventId);
+        return service.putLike(userId, eventId);
+    }
+
+    @PutMapping("/{eventId}/dislike")
+    public EventShortDto putDislike(@PathVariable Long userId,
+                                    @PathVariable Long eventId) {
+        log.info("Controller: putDislike() userId={}, eventId={}", userId, eventId);
+        return service.putDislike(userId, eventId);
+    }
+
+    @DeleteMapping("/{eventId}/like")
+    public void deleteLike(@PathVariable Long userId,
+                           @PathVariable Long eventId) {
+        log.info("Controller: deleteLike() userId={}, eventId={}", userId, eventId);
+        service.deleteLike(userId, eventId);
+    }
+
+    @DeleteMapping("/{eventId}/dislike")
+    public void deleteDislike(@PathVariable Long userId,
+                              @PathVariable Long eventId) {
+        log.info("Controller: deleteDislike() userId={}, eventId={}", userId, eventId);
+        service.deleteDislike(userId, eventId);
     }
 }
