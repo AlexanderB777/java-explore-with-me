@@ -17,7 +17,6 @@ import java.util.List;
 public class AuthorsController {
     private final UserService service;
 
-
     @GetMapping
     public List<AuthorDto> getAuthors() {
         log.info("Controller: getAuthors()");

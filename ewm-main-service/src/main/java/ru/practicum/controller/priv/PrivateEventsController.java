@@ -68,31 +68,19 @@ public class PrivateEventsController {
         return service.updateUsersParticipationRequest(userId, eventId, request);
     }
 
-    @PutMapping("/{eventId}/like")
-    public EventShortDto putLike(@PathVariable Long userId,
-                                 @PathVariable Long eventId) {
-        log.info("Controller: putLike() userId={}, eventId={}", userId, eventId);
-        return service.putLike(userId, eventId);
+    @PutMapping("/{eventId}/reaction")
+    public EventShortDto putReaction(@PathVariable Long userId,
+                                     @PathVariable Long eventId,
+                                     @RequestParam Boolean isPositive) {
+        log.info("Controller: putReaction() userId={}, eventId={}, isPositive={}", userId, eventId, isPositive);
+        return service.putReaction(userId, eventId, isPositive);
     }
 
-    @PutMapping("/{eventId}/dislike")
-    public EventShortDto putDislike(@PathVariable Long userId,
-                                    @PathVariable Long eventId) {
-        log.info("Controller: putDislike() userId={}, eventId={}", userId, eventId);
-        return service.putDislike(userId, eventId);
-    }
-
-    @DeleteMapping("/{eventId}/like")
-    public void deleteLike(@PathVariable Long userId,
-                           @PathVariable Long eventId) {
-        log.info("Controller: deleteLike() userId={}, eventId={}", userId, eventId);
-        service.deleteLike(userId, eventId);
-    }
-
-    @DeleteMapping("/{eventId}/dislike")
-    public void deleteDislike(@PathVariable Long userId,
-                              @PathVariable Long eventId) {
-        log.info("Controller: deleteDislike() userId={}, eventId={}", userId, eventId);
-        service.deleteDislike(userId, eventId);
+    @DeleteMapping("/{eventId}/reaction")
+    public void deleteReaction(@PathVariable Long userId,
+                               @PathVariable Long eventId,
+                               @RequestParam Boolean isPositive) {
+        log.info("Controller: deleteReaction() userId={}, eventId={}, isPositive={}", userId, eventId, isPositive);
+        service.deleteReaction(userId, eventId, isPositive);
     }
 }

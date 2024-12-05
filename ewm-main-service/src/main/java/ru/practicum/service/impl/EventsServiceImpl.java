@@ -278,8 +278,7 @@ public class EventsServiceImpl implements EventsService {
         return participationRequestMapper.toDto(requests);
     }
 
-    @Override
-    public EventShortDto putLike(Long userId, Long eventId) {
+    private EventShortDto putLike(Long userId, Long eventId) {
         log.info("service: putLike(), userId: {}, eventId: {}", userId, eventId);
         checkUserAndEvent(userId, eventId);
         if (!checkPublishedById(eventId)) {
@@ -293,8 +292,7 @@ public class EventsServiceImpl implements EventsService {
         return mapper.toShortDto(repository.findById(eventId).orElse(null));
     }
 
-    @Override
-    public EventShortDto putDislike(Long userId, Long eventId) {
+    private EventShortDto putDislike(Long userId, Long eventId) {
         log.info("service: putDislike(), userId: {}, eventId: {}", userId, eventId);
         checkUserAndEvent(userId, eventId);
         if (!checkPublishedById(eventId)) {
@@ -313,8 +311,7 @@ public class EventsServiceImpl implements EventsService {
         return event != null && event.getState() == EventState.PUBLISHED;
     }
 
-    @Override
-    public void deleteLike(Long userId, Long eventId) {
+    private void deleteLike(Long userId, Long eventId) {
         log.info("service: deleteLike(), userId: {}, eventId: {}", userId, eventId);
         checkUserAndEvent(userId, eventId);
         Optional<Reaction> reaction = reactionRepository.findByUser_idAndEvent_id(userId, eventId);
@@ -323,8 +320,7 @@ public class EventsServiceImpl implements EventsService {
         }
     }
 
-    @Override
-    public void deleteDislike(Long userId, Long eventId) {
+    private void deleteDislike(Long userId, Long eventId) {
         log.info("service: deleteDislike(), userId: {}, eventId: {}", userId, eventId);
         checkUserAndEvent(userId, eventId);
         Optional<Reaction> reaction = reactionRepository.findByUser_idAndEvent_id(userId, eventId);
@@ -343,6 +339,22 @@ public class EventsServiceImpl implements EventsService {
                 .sorted(Comparator.comparing(x -> x.getLikes() - x.getDislikes()))
                 .toList()
                 .reversed();
+    }
+
+    @Override
+    public EventShortDto putReaction(Long userId, Long eventId, Boolean isPositive) {
+        return isPositive
+                ? putLike(userId, eventId)
+                : putDislike(userId, eventId);
+    }
+
+    @Override
+    public void deleteReaction(Long userId, Long eventId, Boolean isPositive) {
+        if (isPositive) {
+            deleteLike(userId, eventId);
+        } else {
+            deleteDislike(userId, eventId);
+        }
     }
 
     @Override
