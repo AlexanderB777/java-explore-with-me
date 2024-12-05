@@ -1,5 +1,6 @@
 package ru.practicum.service;
 
+import ru.practicum.dto.user.AuthorDto;
 import ru.practicum.dto.user.NewUserRequest;
 import ru.practicum.dto.user.UserDto;
 
@@ -11,4 +12,6 @@ public interface UserService {
     UserDto createUser(NewUserRequest request);
 
     void deleteUser(Long userId);
+
+    List<AuthorDto> getAuthorsByRating();
 }

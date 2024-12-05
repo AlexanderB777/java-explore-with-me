@@ -1,5 +1,6 @@
 package ru.practicum.stats;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -13,9 +14,15 @@ import java.util.List;
 
 @Service
 public class StatsClient {
-    private static final String BASE_URL = "http://stats-server:9090";
-    private final WebClient webClient = WebClient.builder().baseUrl(BASE_URL).build();
+
+    private final WebClient webClient;
+    private final String baseUrl;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    public StatsClient(@Value("${stats-server.url:http://localhost:9090}") String url) {
+        this.webClient = WebClient.builder().baseUrl(url).build();
+        this.baseUrl = url;
+    }
 
     public void recordHit(String app,
                           String uri,
@@ -36,7 +43,7 @@ public class StatsClient {
                                              List<String> uris,
                                              Boolean unique) {
 
-        URI uri = UriComponentsBuilder.fromHttpUrl(BASE_URL + "/stats")
+        URI uri = UriComponentsBuilder.fromUriString(baseUrl + "/stats")
                 .queryParam("start", start.format(FORMATTER))
                 .queryParam("end", end.format(FORMATTER))
                 .queryParam("uris", uris)
