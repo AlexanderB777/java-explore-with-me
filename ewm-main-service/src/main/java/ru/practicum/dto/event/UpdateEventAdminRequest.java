@@ -1,7 +1,6 @@
 package ru.practicum.dto.event;
 
 import jakarta.validation.constraints.Size;
-import lombok.Data;
 import ru.practicum.model.EventStateAction;
 import ru.practicum.model.Location;
 

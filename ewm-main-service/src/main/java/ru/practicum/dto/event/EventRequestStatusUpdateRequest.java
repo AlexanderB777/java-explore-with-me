@@ -1,6 +1,5 @@
 package ru.practicum.dto.event;
 
-import lombok.Data;
 import ru.practicum.model.RequestStatus;
 
 import java.util.List;

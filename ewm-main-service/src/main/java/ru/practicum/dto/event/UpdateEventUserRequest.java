@@ -3,7 +3,6 @@ package ru.practicum.dto.event;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
 import ru.practicum.model.Location;
 import ru.practicum.model.StateAction;
 

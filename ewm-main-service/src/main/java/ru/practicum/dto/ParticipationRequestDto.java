@@ -1,6 +1,5 @@
 package ru.practicum.dto;
 
-import lombok.Data;
 import ru.practicum.model.ParticipationRequestStatus;
 
 public record ParticipationRequestDto(String created,
