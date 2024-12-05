@@ -7,21 +7,19 @@ import lombok.Data;
 import ru.practicum.model.Location;
 import ru.practicum.model.StateAction;
 
-@Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class UpdateEventUserRequest {
-    @Size(min = 20, max = 2000)
-    private String annotation;
-    private Long category;
-    @Size(min = 20, max = 7000)
-    private String description;
-    private String eventDate;
-    private Location location;
-    private Boolean paid;
-    @PositiveOrZero
-    private Integer participantLimit;
-    private Boolean requestModeration;
-    private StateAction stateAction;
-    @Size(min = 3, max = 120)
-    private String title;
+public record UpdateEventUserRequest(@Size(min = 20, max = 2000)
+                                     String annotation,
+                                     Long category,
+                                     @Size(min = 20, max = 7000)
+                                     String description,
+                                     String eventDate,
+                                     Location location,
+                                     Boolean paid,
+                                     @PositiveOrZero
+                                     Integer participantLimit,
+                                     Boolean requestModeration,
+                                     StateAction stateAction,
+                                     @Size(min = 3, max = 120)
+                                     String title) {
 }

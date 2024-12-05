@@ -53,23 +53,26 @@ public class EventsServiceImpl implements EventsService {
     @Override
     public EventFullDto createUsersEvent(Long userId, NewEventDto dto) {
         log.info("Service: createUsersEvent(), userId = {}, dto = {}", userId, dto);
-        if (LocalDateTime.parse(dto.getEventDate(), UtilConstants.FORMATTER)
+        if (LocalDateTime.parse(dto.eventDate(), UtilConstants.FORMATTER)
                 .isBefore(LocalDateTime.now().plusHours(2))) {
             throw new IncorrectRequestException("Field: eventDate. " +
                     "Error: должно содержать дату, которая еще не наступила. " +
-                    "Value:" + dto.getEventDate());
-        }
-        if (dto.getPaid() == null) {
-            dto.setPaid(false);
-        }
-        if (dto.getParticipantLimit() == null) {
-            dto.setParticipantLimit(0);
-        }
-        if (dto.getRequestModeration() == null) {
-            dto.setRequestModeration(true);
+                    "Value:" + dto.eventDate());
         }
 
-        Event event = repository.save(mapper.toEntity(userId, dto));
+        NewEventDto updatedDto = new NewEventDto(
+                dto.annotation(),
+                dto.category(),
+                dto.description(),
+                dto.eventDate(),
+                dto.location(),
+                dto.paid() != null ? dto.paid() : false,
+                dto.participantLimit() != null ? dto.participantLimit() : 0,
+                dto.requestModeration() != null ? dto.requestModeration() : true,
+                dto.title()
+        );
+
+        Event event = repository.save(mapper.toEntity(userId, updatedDto));
         return mapper.toFullDto(event);
     }
 
@@ -85,8 +88,8 @@ public class EventsServiceImpl implements EventsService {
     @Override
     public EventFullDto updateUsersEventById(Long userId, Long eventId, UpdateEventUserRequest request) {
         log.info("Service: updateUsersEventById(), userId = {}, eventId = {}", userId, eventId);
-        if (request.getEventDate() != null
-                && LocalDateTime.parse(request.getEventDate(), UtilConstants.FORMATTER)
+        if (request.eventDate() != null
+                && LocalDateTime.parse(request.eventDate(), UtilConstants.FORMATTER)
                 .isBefore(LocalDateTime.now().minusHours(2L))) {
             throw new IncorrectRequestException("Can not set eventDate earlier than two hours after now");
         }
@@ -97,13 +100,13 @@ public class EventsServiceImpl implements EventsService {
                 .orElseThrow(() -> new NotFoundException(String.format("Event with id=%d was not found", eventId)));
         switch (event.getState()) {
             case PENDING -> {
-                if (request.getStateAction() == StateAction.CANCEL_REVIEW) {
+                if (request.stateAction() == StateAction.CANCEL_REVIEW) {
                     event.setState(EventState.CANCELED);
                 }
             }
             case PUBLISHED -> throw new EventConstraintException("Only pending or canceled events can be changed");
             case CANCELED -> {
-                if (request.getStateAction() == StateAction.SEND_TO_REVIEW) {
+                if (request.stateAction() == StateAction.SEND_TO_REVIEW) {
                     event.setState(EventState.PENDING);
                 }
             }
@@ -148,8 +151,8 @@ public class EventsServiceImpl implements EventsService {
     @Override
     public EventFullDto updateEvent(Long eventId, UpdateEventAdminRequest request) {
         log.info("Service: updateEvent(), eventId = {}, request = {}", eventId, request);
-        if (request.getEventDate() != null
-                && LocalDateTime.parse(request.getEventDate(), UtilConstants.FORMATTER)
+        if (request.eventDate() != null
+                && LocalDateTime.parse(request.eventDate(), UtilConstants.FORMATTER)
                 .isBefore(LocalDateTime.now())) {
             throw new IncorrectRequestException("Can not set eventDate after current date");
         }
@@ -157,13 +160,13 @@ public class EventsServiceImpl implements EventsService {
         Event event = repository
                 .findById(eventId)
                 .orElseThrow(() -> new NotFoundException(String.format("Event with id=%d was not found", eventId)));
-        EventStateAction stateAction = request.getStateAction();
+        EventStateAction stateAction = request.stateAction();
 
         if (stateAction != null) {
             EventState currentState = event.getState();
             LocalDateTime eventDateTime;
-            if (request.getEventDate() != null) {
-                eventDateTime = LocalDateTime.parse(request.getEventDate(), UtilConstants.FORMATTER);
+            if (request.eventDate() != null) {
+                eventDateTime = LocalDateTime.parse(request.eventDate(), UtilConstants.FORMATTER);
             } else {
                 eventDateTime = event.getEventDate();
             }
@@ -336,7 +339,7 @@ public class EventsServiceImpl implements EventsService {
         return events
                 .stream()
                 .map(mapper::toFullDto)
-                .sorted(Comparator.comparing(x -> x.getLikes() - x.getDislikes()))
+                .sorted(Comparator.comparing(x -> x.likes() - x.dislikes()))
                 .toList()
                 .reversed();
     }
@@ -375,7 +378,7 @@ public class EventsServiceImpl implements EventsService {
 
         List<ParticipationRequest> requestsForUpdateStatus = event.getRequests()
                 .stream()
-                .filter(participationRequest -> request.getRequestIds().contains(participationRequest.getId()))
+                .filter(participationRequest -> request.requestIds().contains(participationRequest.getId()))
                 .filter(participationRequest -> {
                     if (participationRequest.getStatus() != ParticipationRequestStatus.PENDING) {
                         throw new IncorrectRequestException("Request must have status PENDING");
@@ -384,7 +387,7 @@ public class EventsServiceImpl implements EventsService {
                 })
                 .toList();
         ParticipationRequestStatus statusToSet =
-                request.getStatus() == RequestStatus.CONFIRMED
+                request.status() == RequestStatus.CONFIRMED
                         ? ParticipationRequestStatus.CONFIRMED
                         : ParticipationRequestStatus.REJECTED;
 
@@ -409,28 +412,28 @@ public class EventsServiceImpl implements EventsService {
 
     private void updateEventByQuery(UpdateEventUserRequest request, Event event) {
         updateEventByQuery(event,
-                request.getAnnotation(),
-                request.getCategory(),
-                request.getDescription(),
-                request.getEventDate(),
-                request.getLocation(),
-                request.getPaid(),
-                request.getParticipantLimit(),
-                request.getRequestModeration(),
-                request.getTitle());
+                request.annotation(),
+                request.category(),
+                request.description(),
+                request.eventDate(),
+                request.location(),
+                request.paid(),
+                request.participantLimit(),
+                request.requestModeration(),
+                request.title());
     }
 
     private void updateEventByQuery(UpdateEventAdminRequest request, Event event) {
         updateEventByQuery(event,
-                request.getAnnotation(),
-                request.getCategory(),
-                request.getDescription(),
-                request.getEventDate(),
-                request.getLocation(),
-                request.getPaid(),
-                request.getParticipantLimit(),
-                request.getRequestModeration(),
-                request.getTitle());
+                request.annotation(),
+                request.category(),
+                request.description(),
+                request.eventDate(),
+                request.location(),
+                request.paid(),
+                request.participantLimit(),
+                request.requestModeration(),
+                request.title());
     }
 
     private void updateEventByQuery(Event event,

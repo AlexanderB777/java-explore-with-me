@@ -52,13 +52,11 @@ public class CompilationServiceImpl implements CompilationsService {
     @Override
     public CompilationDto addCompilation(NewCompilationDto dto) {
         log.info("service: addCompilation(), dto = {}", dto.toString());
-        if (dto.getPinned() == null) {
-            dto.setPinned(false);
+        Compilation compilation = mapper.toEntity(dto, eventsRepository);
+        if (dto.pinned() == null) {
+            compilation.setPinned(false);
         }
-        return mapper
-                .toDto(repository
-                        .save(mapper
-                                .toEntity(dto, eventsRepository)));
+        return mapper.toDto(repository.save(compilation));
     }
 
     @Override
@@ -77,15 +75,15 @@ public class CompilationServiceImpl implements CompilationsService {
         Compilation compilation = repository.findById(compId)
                 .orElseThrow(() -> new NotFoundException(String
                         .format("Compilation with id=%d was not found", compId)));
-        if (dto.getPinned() != null) {
-            compilation.setPinned(dto.getPinned());
+        if (dto.pinned() != null) {
+            compilation.setPinned(dto.pinned());
         }
-        if (dto.getTitle() != null) {
-            compilation.setTitle(dto.getTitle());
+        if (dto.title() != null) {
+            compilation.setTitle(dto.title());
         }
         compilation.setEvents(new ArrayList<>());
-        if (dto.getEvents() != null && !dto.getEvents().isEmpty()) {
-            for (Long eventId : dto.getEvents()) {
+        if (dto.events() != null && !dto.events().isEmpty()) {
+            for (Long eventId : dto.events()) {
                 if (!eventsRepository.existsById(eventId)) {
                     throw new NotFoundException(String.format("Event with id=%d was not found", eventId));
                 }
