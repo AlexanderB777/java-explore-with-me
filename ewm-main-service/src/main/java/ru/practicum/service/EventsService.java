@@ -31,4 +31,10 @@ public interface EventsService {
     EventRequestStatusUpdateResult updateUsersParticipationRequest(Long userId,
                                                                    Long eventId,
                                                                    EventRequestStatusUpdateRequest request);
+
+    List<EventFullDto> getEventsByRating();
+
+    EventShortDto putReaction(Long userId, Long eventId, Boolean isPositive);
+
+    void deleteReaction(Long userId, Long eventId, Boolean isPositive);
 }

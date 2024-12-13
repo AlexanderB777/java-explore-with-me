@@ -7,10 +7,7 @@ import org.mapstruct.Named;
 import ru.practicum.dto.event.EventFullDto;
 import ru.practicum.dto.event.EventShortDto;
 import ru.practicum.dto.event.NewEventDto;
-import ru.practicum.entity.Category;
-import ru.practicum.entity.Event;
-import ru.practicum.entity.ParticipationRequest;
-import ru.practicum.entity.User;
+import ru.practicum.entity.*;
 import ru.practicum.model.ParticipationRequestStatus;
 import ru.practicum.util.UtilConstants;
 
@@ -25,6 +22,12 @@ public interface EventMapper {
     @Mapping(target = "eventDate",
             source = "eventDate",
             qualifiedByName = "timeToString")
+    @Mapping(target = "likes",
+            source = "reactions",
+            qualifiedByName = "countLikes")
+    @Mapping(target = "dislikes",
+            source = "reactions",
+            qualifiedByName = "countDislikes")
     EventShortDto toShortDto(Event event);
 
     @IterableMapping(elementTargetType = EventShortDto.class)
@@ -58,6 +61,12 @@ public interface EventMapper {
     @Mapping(target = "publishedOn",
             source = "publishedOn",
             qualifiedByName = "timeToString")
+    @Mapping(target = "likes",
+            source = "reactions",
+            qualifiedByName = "countLikes")
+    @Mapping(target = "dislikes",
+            source = "reactions",
+            qualifiedByName = "countDislikes")
     EventFullDto toFullDto(Event event);
 
     @IterableMapping(elementTargetType = EventFullDto.class)
@@ -71,6 +80,24 @@ public interface EventMapper {
                 .stream()
                 .filter(request -> request.getStatus() == ParticipationRequestStatus.CONFIRMED)
                 .count();
+    }
+
+    @Named("countLikes")
+    static Long countLikes(List<Reaction> reactions) {
+        if (reactions == null || reactions.isEmpty()) {
+            return 0L;
+        } else {
+            return reactions.stream().filter(Reaction::getIsPositive).count();
+        }
+    }
+
+    @Named("countDislikes")
+    static Long countDislikes(List<Reaction> reactions) {
+        if (reactions == null || reactions.isEmpty()) {
+            return 0L;
+        } else {
+            return reactions.stream().filter(reaction -> !reaction.getIsPositive()).count();
+        }
     }
 
     @Named("timeToString")

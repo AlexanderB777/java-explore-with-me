@@ -9,10 +9,7 @@ import org.springframework.stereotype.Service;
 import ru.practicum.dto.ParticipationRequestDto;
 import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.dto.event.*;
-import ru.practicum.entity.Category;
-import ru.practicum.entity.Event;
-import ru.practicum.entity.ParticipationRequest;
-import ru.practicum.entity.QEvent;
+import ru.practicum.entity.*;
 import ru.practicum.exception.EventConstraintException;
 import ru.practicum.exception.IncorrectRequestException;
 import ru.practicum.exception.NotFoundException;
@@ -20,12 +17,15 @@ import ru.practicum.mapper.EventMapper;
 import ru.practicum.mapper.ParticipationRequestMapper;
 import ru.practicum.model.*;
 import ru.practicum.reposirory.EventsRepository;
+import ru.practicum.reposirory.ReactionRepository;
+import ru.practicum.reposirory.UserRepository;
 import ru.practicum.service.EventsService;
 import ru.practicum.stats.StatsClient;
 import ru.practicum.util.UtilConstants;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,6 +38,8 @@ public class EventsServiceImpl implements EventsService {
     private final JPAQueryFactory queryFactory;
     private final StatsClient statsClient;
     private final ParticipationRequestMapper participationRequestMapper;
+    private final ReactionRepository reactionRepository;
+    private final UserRepository userRepository;
 
     @Override
     public List<EventShortDto> getUsersEvents(Long userId, Integer from, Integer size) {
@@ -51,23 +53,26 @@ public class EventsServiceImpl implements EventsService {
     @Override
     public EventFullDto createUsersEvent(Long userId, NewEventDto dto) {
         log.info("Service: createUsersEvent(), userId = {}, dto = {}", userId, dto);
-        if (LocalDateTime.parse(dto.getEventDate(), UtilConstants.FORMATTER)
+        if (LocalDateTime.parse(dto.eventDate(), UtilConstants.FORMATTER)
                 .isBefore(LocalDateTime.now().plusHours(2))) {
             throw new IncorrectRequestException("Field: eventDate. " +
                     "Error: должно содержать дату, которая еще не наступила. " +
-                    "Value:" + dto.getEventDate());
-        }
-        if (dto.getPaid() == null) {
-            dto.setPaid(false);
-        }
-        if (dto.getParticipantLimit() == null) {
-            dto.setParticipantLimit(0);
-        }
-        if (dto.getRequestModeration() == null) {
-            dto.setRequestModeration(true);
+                    "Value:" + dto.eventDate());
         }
 
-        Event event = repository.save(mapper.toEntity(userId, dto));
+        NewEventDto updatedDto = new NewEventDto(
+                dto.annotation(),
+                dto.category(),
+                dto.description(),
+                dto.eventDate(),
+                dto.location(),
+                dto.paid() != null ? dto.paid() : false,
+                dto.participantLimit() != null ? dto.participantLimit() : 0,
+                dto.requestModeration() != null ? dto.requestModeration() : true,
+                dto.title()
+        );
+
+        Event event = repository.save(mapper.toEntity(userId, updatedDto));
         return mapper.toFullDto(event);
     }
 
@@ -83,8 +88,8 @@ public class EventsServiceImpl implements EventsService {
     @Override
     public EventFullDto updateUsersEventById(Long userId, Long eventId, UpdateEventUserRequest request) {
         log.info("Service: updateUsersEventById(), userId = {}, eventId = {}", userId, eventId);
-        if (request.getEventDate() != null
-                && LocalDateTime.parse(request.getEventDate(), UtilConstants.FORMATTER)
+        if (request.eventDate() != null
+                && LocalDateTime.parse(request.eventDate(), UtilConstants.FORMATTER)
                 .isBefore(LocalDateTime.now().minusHours(2L))) {
             throw new IncorrectRequestException("Can not set eventDate earlier than two hours after now");
         }
@@ -95,13 +100,13 @@ public class EventsServiceImpl implements EventsService {
                 .orElseThrow(() -> new NotFoundException(String.format("Event with id=%d was not found", eventId)));
         switch (event.getState()) {
             case PENDING -> {
-                if (request.getStateAction() == StateAction.CANCEL_REVIEW) {
+                if (request.stateAction() == StateAction.CANCEL_REVIEW) {
                     event.setState(EventState.CANCELED);
                 }
             }
             case PUBLISHED -> throw new EventConstraintException("Only pending or canceled events can be changed");
             case CANCELED -> {
-                if (request.getStateAction() == StateAction.SEND_TO_REVIEW) {
+                if (request.stateAction() == StateAction.SEND_TO_REVIEW) {
                     event.setState(EventState.PENDING);
                 }
             }
@@ -146,8 +151,8 @@ public class EventsServiceImpl implements EventsService {
     @Override
     public EventFullDto updateEvent(Long eventId, UpdateEventAdminRequest request) {
         log.info("Service: updateEvent(), eventId = {}, request = {}", eventId, request);
-        if (request.getEventDate() != null
-                && LocalDateTime.parse(request.getEventDate(), UtilConstants.FORMATTER)
+        if (request.eventDate() != null
+                && LocalDateTime.parse(request.eventDate(), UtilConstants.FORMATTER)
                 .isBefore(LocalDateTime.now())) {
             throw new IncorrectRequestException("Can not set eventDate after current date");
         }
@@ -155,13 +160,13 @@ public class EventsServiceImpl implements EventsService {
         Event event = repository
                 .findById(eventId)
                 .orElseThrow(() -> new NotFoundException(String.format("Event with id=%d was not found", eventId)));
-        EventStateAction stateAction = request.getStateAction();
+        EventStateAction stateAction = request.stateAction();
 
         if (stateAction != null) {
             EventState currentState = event.getState();
             LocalDateTime eventDateTime;
-            if (request.getEventDate() != null) {
-                eventDateTime = LocalDateTime.parse(request.getEventDate(), UtilConstants.FORMATTER);
+            if (request.eventDate() != null) {
+                eventDateTime = LocalDateTime.parse(request.eventDate(), UtilConstants.FORMATTER);
             } else {
                 eventDateTime = event.getEventDate();
             }
@@ -230,12 +235,10 @@ public class EventsServiceImpl implements EventsService {
         }
         if (sort != null && !sort.isEmpty()) {
             switch (sort) {
-                case "EVENT_DATE" -> {
-                    query.orderBy(event.eventDate.desc());
-                }
-                case "VIEWS" -> {
-                    query.orderBy(event.views.desc());
-                }
+                case "EVENT_DATE" -> query.orderBy(event.eventDate.desc());
+
+                case "VIEWS" -> query.orderBy(event.views.desc());
+
             }
         }
         query.offset(from).limit(size);
@@ -278,6 +281,85 @@ public class EventsServiceImpl implements EventsService {
         return participationRequestMapper.toDto(requests);
     }
 
+    private EventShortDto putLike(Long userId, Long eventId) {
+        log.info("service: putLike(), userId: {}, eventId: {}", userId, eventId);
+        checkUserAndEvent(userId, eventId);
+        if (!checkPublishedById(eventId)) {
+            throw new IncorrectRequestException("Event with id " + eventId + " is not published");
+        }
+        Reaction reaction = reactionRepository
+                .findByUser_idAndEvent_id(userId, eventId)
+                .orElse(new Reaction(userId, eventId));
+        reaction.setIsPositive(true);
+        reactionRepository.save(reaction);
+        return mapper.toShortDto(repository.findById(eventId).orElse(null));
+    }
+
+    private EventShortDto putDislike(Long userId, Long eventId) {
+        log.info("service: putDislike(), userId: {}, eventId: {}", userId, eventId);
+        checkUserAndEvent(userId, eventId);
+        if (!checkPublishedById(eventId)) {
+            throw new IncorrectRequestException("Event with id " + eventId + " is not published");
+        }
+        Reaction reaction = reactionRepository
+                .findByUser_idAndEvent_id(userId, eventId)
+                .orElse(new Reaction(userId, eventId));
+        reaction.setIsPositive(false);
+        reactionRepository.save(reaction);
+        return mapper.toShortDto(repository.findById(eventId).orElse(null));
+    }
+
+    private boolean checkPublishedById(Long eventId) {
+        Event event = repository.findById(eventId).orElse(null);
+        return event != null && event.getState() == EventState.PUBLISHED;
+    }
+
+    private void deleteLike(Long userId, Long eventId) {
+        log.info("service: deleteLike(), userId: {}, eventId: {}", userId, eventId);
+        checkUserAndEvent(userId, eventId);
+        Optional<Reaction> reaction = reactionRepository.findByUser_idAndEvent_id(userId, eventId);
+        if (reaction.isPresent() && reaction.get().getIsPositive()) {
+            reactionRepository.deleteById(reaction.get().getId());
+        }
+    }
+
+    private void deleteDislike(Long userId, Long eventId) {
+        log.info("service: deleteDislike(), userId: {}, eventId: {}", userId, eventId);
+        checkUserAndEvent(userId, eventId);
+        Optional<Reaction> reaction = reactionRepository.findByUser_idAndEvent_id(userId, eventId);
+        if (reaction.isPresent() && !reaction.get().getIsPositive()) {
+            reactionRepository.deleteById(reaction.get().getId());
+        }
+    }
+
+    @Override
+    public List<EventFullDto> getEventsByRating() {
+        log.info("service: getEventsByRating()");
+        List<Event> events = repository.findAllByEventState(EventState.PUBLISHED);
+        return events
+                .stream()
+                .map(mapper::toFullDto)
+                .sorted(Comparator.comparing(x -> x.likes() - x.dislikes()))
+                .toList()
+                .reversed();
+    }
+
+    @Override
+    public EventShortDto putReaction(Long userId, Long eventId, Boolean isPositive) {
+        return isPositive
+                ? putLike(userId, eventId)
+                : putDislike(userId, eventId);
+    }
+
+    @Override
+    public void deleteReaction(Long userId, Long eventId, Boolean isPositive) {
+        if (isPositive) {
+            deleteLike(userId, eventId);
+        } else {
+            deleteDislike(userId, eventId);
+        }
+    }
+
     @Override
     public EventRequestStatusUpdateResult updateUsersParticipationRequest(Long userId,
                                                                           Long eventId,
@@ -296,7 +378,7 @@ public class EventsServiceImpl implements EventsService {
 
         List<ParticipationRequest> requestsForUpdateStatus = event.getRequests()
                 .stream()
-                .filter(participationRequest -> request.getRequestIds().contains(participationRequest.getId()))
+                .filter(participationRequest -> request.requestIds().contains(participationRequest.getId()))
                 .filter(participationRequest -> {
                     if (participationRequest.getStatus() != ParticipationRequestStatus.PENDING) {
                         throw new IncorrectRequestException("Request must have status PENDING");
@@ -305,7 +387,7 @@ public class EventsServiceImpl implements EventsService {
                 })
                 .toList();
         ParticipationRequestStatus statusToSet =
-                request.getStatus() == RequestStatus.CONFIRMED
+                request.status() == RequestStatus.CONFIRMED
                         ? ParticipationRequestStatus.CONFIRMED
                         : ParticipationRequestStatus.REJECTED;
 
@@ -330,28 +412,28 @@ public class EventsServiceImpl implements EventsService {
 
     private void updateEventByQuery(UpdateEventUserRequest request, Event event) {
         updateEventByQuery(event,
-                request.getAnnotation(),
-                request.getCategory(),
-                request.getDescription(),
-                request.getEventDate(),
-                request.getLocation(),
-                request.getPaid(),
-                request.getParticipantLimit(),
-                request.getRequestModeration(),
-                request.getTitle());
+                request.annotation(),
+                request.category(),
+                request.description(),
+                request.eventDate(),
+                request.location(),
+                request.paid(),
+                request.participantLimit(),
+                request.requestModeration(),
+                request.title());
     }
 
     private void updateEventByQuery(UpdateEventAdminRequest request, Event event) {
         updateEventByQuery(event,
-                request.getAnnotation(),
-                request.getCategory(),
-                request.getDescription(),
-                request.getEventDate(),
-                request.getLocation(),
-                request.getPaid(),
-                request.getParticipantLimit(),
-                request.getRequestModeration(),
-                request.getTitle());
+                request.annotation(),
+                request.category(),
+                request.description(),
+                request.eventDate(),
+                request.location(),
+                request.paid(),
+                request.participantLimit(),
+                request.requestModeration(),
+                request.title());
     }
 
     private void updateEventByQuery(Event event,
@@ -425,6 +507,15 @@ public class EventsServiceImpl implements EventsService {
             if (endTime != null) {
                 query.where(event.eventDate.loe(endTime));
             }
+        }
+    }
+
+    private void checkUserAndEvent(Long userId, Long eventId) {
+        if (!userRepository.existsById(userId)) {
+            throw new NotFoundException("User with id " + userId + " does not exist");
+        }
+        if (!repository.existsById(eventId)) {
+            throw new NotFoundException("Event with id " + eventId + " does not exist");
         }
     }
 }

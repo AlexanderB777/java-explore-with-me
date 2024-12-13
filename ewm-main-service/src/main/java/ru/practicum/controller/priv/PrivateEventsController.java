@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.dto.ParticipationRequestDto;
 import ru.practicum.dto.event.*;
 import ru.practicum.service.EventsService;
-import ru.practicum.service.RequestsService;
 
 import java.util.List;
 
@@ -19,7 +18,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PrivateEventsController {
     private final EventsService service;
-    private final RequestsService requestsService;
 
     @GetMapping
     public List<EventShortDto> getUsersEvents(@PathVariable @Positive Long userId,
@@ -68,5 +66,21 @@ public class PrivateEventsController {
         log.info("Controller: updateUsersParticipationRequest() userId={}, eventId={}, request={}",
                 userId, eventId, request);
         return service.updateUsersParticipationRequest(userId, eventId, request);
+    }
+
+    @PutMapping("/{eventId}/reaction")
+    public EventShortDto putReaction(@PathVariable Long userId,
+                                     @PathVariable Long eventId,
+                                     @RequestParam Boolean isPositive) {
+        log.info("Controller: putReaction() userId={}, eventId={}, isPositive={}", userId, eventId, isPositive);
+        return service.putReaction(userId, eventId, isPositive);
+    }
+
+    @DeleteMapping("/{eventId}/reaction")
+    public void deleteReaction(@PathVariable Long userId,
+                               @PathVariable Long eventId,
+                               @RequestParam Boolean isPositive) {
+        log.info("Controller: deleteReaction() userId={}, eventId={}, isPositive={}", userId, eventId, isPositive);
+        service.deleteReaction(userId, eventId, isPositive);
     }
 }
